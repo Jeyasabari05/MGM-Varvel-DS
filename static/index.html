@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#075cb6"><title>MGM Varvel | Motor Datasheet Selector</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <main id="landing" class="landing" aria-label="Product selector">
+    <img class="landing-art" src="/assets/landing-reference.jpg" alt="MGM Varvel power transmission product selector">
+    <button class="hotspot motor-hotspot" id="open-motor" aria-label="Open Motor datasheet selector"></button>
+    <button class="hotspot gear-hotspot gear-one" data-name="RC Inline Helical Gearbox" aria-label="RC Inline Helical Gearbox, future module"></button>
+    <button class="hotspot gear-hotspot gear-two" data-name="RK Heli-Bevel Gearbox" aria-label="RK Heli-Bevel Gearbox, future module"></button>
+    <button class="hotspot gear-hotspot gear-three" data-name="RF Parallel Helical Gearbox" aria-label="RF Parallel Helical Gearbox, future module"></button>
+    <button class="hotspot gear-hotspot gear-four" data-name="RH Hoist Gearbox" aria-label="RH Hoist Gearbox, future module"></button>
+    <div class="landing-toast" id="landing-toast" role="status"></div>
+  </main>
+
+  <main id="selector" class="app-shell hidden">
+    <header class="topbar">
+      <button class="brand" id="back-home" aria-label="Back to product selector"><img src="/assets/company-logo.jpg" alt="MGM Varvel Power Transmission"></button>
+      <div class="topbar-right"><h1 class="topbar-title">Motor Datasheet</h1></div>
+    </header>
+    <section class="intro">
+      <div><p>Configure a motor from verified source data and generate the technical datasheet.</p></div>
+      <button id="download-top" class="button button-primary intro-download"><span class="download-icon"></span> Download Datasheet</button>
+    </section>
+    <section class="workspace">
+      <div class="form-column">
+        <article class="panel selection-panel">
+          <div class="panel-heading"><div class="step">01</div><div><h2>Motor configuration</h2><p>Choose each option in sequence from the supplied motor data.</p></div><span class="required-note">* Required</span></div>
+          <div class="field-grid">
+            <label class="field"><span>Motor type <em>*</em></span><select id="family" required><option value="">Select motor type</option></select></label>
+            <label class="field"><span>Rated power <em>*</em></span><select id="power" required disabled><option value="">Select rated power</option></select></label>
+            <label class="field"><span>No. of poles <em>*</em></span><select id="poles" required disabled><option value="">Select poles</option></select></label>
+            <label class="field"><span>Efficiency class <em>*</em></span><select id="efficiency" required disabled><option value="">Select class</option></select></label>
+            <label class="field"><span>Insulation class <em>*</em></span><select id="insulation" required disabled><option value="">Select insulation class</option></select></label>
+            <label class="field"><span>Protection class <em>*</em></span><select id="protection" required disabled><option value="">Select protection class</option></select></label>
+            <label class="field"><span>Mounting position <em>*</em></span><select id="mounting" required disabled><option value="">Select mounting position</option></select></label>
+            <label class="field"><span>Method of cooling <em>*</em></span><select id="cooling" required disabled><option value="">Select cooling method</option></select></label>
+            <label class="field"><span>Brake configuration <em>*</em></span><select id="brake" required disabled><option value="">Select brake configuration</option></select></label>
+          </div>
+        </article>
+        <article class="panel detail-panel">
+          <div class="panel-heading"><div class="step step-muted">02</div><div><h2>Datasheet specifications</h2><p>Values shown here come from the matched workbook record.</p></div></div>
+          <div class="spec-groups">
+            <section class="spec-group"><h3><span class="group-icon">↗</span>Motor ratings</h3><div class="spec-grid" id="ratings"></div></section>
+            <section class="spec-group"><h3><span class="group-icon">◈</span>Construction &amp; protection</h3><div class="spec-grid" id="construction"></div></section>
+            <section class="spec-group"><h3><span class="group-icon">⌁</span>Brake details</h3><div class="spec-grid" id="brake-specs"></div></section>
+          </div>
+        </article>
+        <div class="notice" id="notice" role="status"><span class="notice-icon">i</span><span id="notice-text">Choose a motor type to view the available source data.</span></div>
+      </div>
+    </section>
+    <footer>© MGM Varvel <span>•</span> Motor selector <span class="footer-right">INTERNAL ENGINEERING TOOL</span></footer>
+    <div id="toast" class="toast" role="alert"></div>
+  </main>
+  <script src="/app.js"></script>
+</body></html>
