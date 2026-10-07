@@ -70,19 +70,25 @@ def read_sources():
                 family = "BAX" if motor_kind.startswith("BAX") else ("BMX" if motor_kind == "BMX" else ("SMX" if motor_kind == "SMX" else None))
                 if not family or (family_hint and family != family_hint): continue
                 values = {}
+                parent_label = None
                 for row in range(1, ws.max_row + 1):
                     label = clean(ws.cell(row, 2).value)
                     sublabel = clean(ws.cell(row, 3).value)
                     cell=ws.cell(row, col)
                     value = excel_display(cell.value, cell.number_format)
                     if label:
+                        parent_label = label
                         key = label
                         if label in ("Bearing", "Material") and sublabel: key = f"{label} - {sublabel}"
                         values[key] = value
+                        if label in ("Efficiency", "Power Factor") and sublabel:
+                            values[f"{label} {sublabel}"] = value
                     elif row in (21, 22):
                         values[f"Efficiency {clean(ws.cell(row, 3).value)}"] = value
                     elif row in (24, 25):
                         values[f"Power Factor {clean(ws.cell(row, 3).value)}"] = value
+                    elif parent_label in ("Bearing", "Material") and sublabel in ("DE", "NDE", "Housing", "Flange"):
+                        values[f"{parent_label} - {sublabel}"] = value
                 eff = values.get("Efficiency Class") or class_hint
                 if class_hint and eff != class_hint: continue
                 brake_type = values.get("Brake type") or brake_hint
@@ -192,7 +198,7 @@ PDF_ROWS = {
     "rated speed": (10, 0), "rated torque": (11, 0), "efficiency class": (12, 0), "duty type": (13, 0),
     "insulation class": (14, 0), "temperature rise class": (14, 0), "degree of protection": (15, 0),
     "method of cooling": (16, 0), "locked rotor current": (17, 0), "locked rotor torque": (18, 0),
-    "breakdown torque": (19, 0), "reference standard": (52, 0), "bearing": (30, 1),
+    "breakdown torque": (19, 0), "reference standard": (52, 0), "bearing": (30, 1), "bearing nde": (31, 1),
     "bearing life time": (32, 1), "lubrication type": (33, 1), "voltage variation": (38, 1),
     "frequency variation": (39, 1), "combined variation": (40, 1), "environmental condition": (26, 1),
     "direction of rotation": (None, 1), "housing material": (34, 1), "flange material": (35, 1),
@@ -213,9 +219,8 @@ def pdf_value_for(label, rec):
     if label == "frame size": return rec["frame"]
     if label == "type of mounting":
         s=vals.get("Mounting"); return s.replace("IM ", "") if s else None
-    if label == "bearing":
-        de, nde = vals.get("Bearing - DE"), vals.get("Bearing - NDE")
-        return f"DE {de} / NDE {nde}" if de and nde else de or nde
+    if label == "bearing": return vals.get("Bearing - DE")
+    if label == "bearing nde": return vals.get("Bearing - NDE")
     if label == "voltage variation" or label == "frequency variation" or label == "combined variation":
         v=vals.get({"voltage variation":"Voltage variation","frequency variation":"Frequency variation","combined variation":"Combined variation"}[label])
         return v.replace("%", "").strip() if v else None
@@ -303,7 +308,7 @@ def generate_pdf(rec):
     values={}
     for label,(row,side) in PDF_ROWS.items():
         if row is None or label=="temperature rise class": continue
-        y={2:68.7,3:85.3,4:102.0,5:118.7,6:135.4,7:168.7,8:152.1,9:185.4,10:202.1,11:218.8,12:235.5,13:252.1,14:268.8,15:302.2,16:318.9,17:335.5,18:352.2,19:368.9,26:185.4,30:68.7,32:102.0,33:118.7,34:218.8,35:235.5,36:252.1,37:268.8,38:135.4,39:152.1,40:168.7,41:285.5,42:318.9,43:302.2,44:335.5,45:352.2,46:368.9,47:385.6,48:402.3,49:418.9,50:435.6,51:452.3,52:485.7,53:469.0,54:485.7,55:519.0,56:535.7,57:552.4,58:569.1,59:519.0,60:535.7,61:552.4,62:569.1}.get(row)
+        y={2:68.7,3:85.3,4:102.0,5:118.7,6:135.4,7:168.7,8:152.1,9:185.4,10:202.1,11:218.8,12:235.5,13:252.1,14:268.8,15:302.2,16:318.9,17:335.5,18:352.2,19:368.9,26:185.4,30:68.7,31:85.3,32:102.0,33:118.7,34:218.8,35:235.5,36:252.1,37:268.8,38:135.4,39:152.1,40:168.7,41:285.5,42:318.9,43:302.2,44:335.5,45:352.2,46:368.9,47:385.6,48:402.3,49:418.9,50:435.6,51:452.3,52:485.7,53:469.0,54:485.7,55:519.0,56:535.7,57:552.4,58:569.1,59:519.0,60:535.7,61:552.4,62:569.1}.get(row)
         if y is None: continue
         val=pdf_value_for(label,rec)
         if val:

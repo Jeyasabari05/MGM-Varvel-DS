@@ -7,6 +7,7 @@ function landingToast(message){const el=$('landing-toast');el.textContent=messag
 function enter(){landing.classList.add('hidden');selector.classList.remove('hidden');window.scrollTo(0,0)}
 $('open-motor').addEventListener('click',enter);
 $('back-home').addEventListener('click',()=>{selector.classList.add('hidden');landing.classList.remove('hidden');window.scrollTo(0,0)});
+$('back-home-row').addEventListener('click',()=>{selector.classList.add('hidden');landing.classList.remove('hidden');window.scrollTo(0,0)});
 document.querySelectorAll('.gear-hotspot').forEach(b=>b.addEventListener('click',()=>landingToast(`${b.dataset.name} is planned for a future module.`)));
 
 async function get(url){const r=await fetch(url);if(!r.ok)throw new Error('Could not load motor source data.');return r.json()}
