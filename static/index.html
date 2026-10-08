@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -7,32 +7,13 @@
 </head>
 <body>
   <main id="landing" class="landing" aria-label="Product selector">
-    <div class="landing-board">
-      <section class="landing-intro" aria-label="MGM Varvel motor selector">
-        <img class="landing-logo" src="/assets/company-logo-transparent.png" alt="MGM Varvel Power Transmission">
-        <div class="landing-copy">
-          <p class="landing-tagline">RELIABLE / EFFICIENT / INNOVATIVE</p>
-          <h1>Power Transmission<br>Solutions for a Stronger<br><span>Tomorrow</span></h1>
-        </div>
-        <button class="hotspot motor-hotspot landing-motor" id="open-motor" aria-label="Open Motor datasheet selector">
-          <img src="/assets/landing-motor.jpg" alt="Blue electric motor">
-          <span>Motor</span><i></i>
-        </button>
-      </section>
-      <section class="landing-categories" aria-label="Gearbox product categories">
-        <button class="hotspot gear-hotspot gear-one" data-name="RC Inline Helical Gearbox" aria-label="RC Inline Helical Gearbox, future module">
-          <img src="/assets/landing-rc.jpg" alt="RC inline helical gearbox"><span>Inline Helical<br>(RC)</span><i></i>
-        </button>
-        <button class="hotspot gear-hotspot gear-two" data-name="RK Heli-Bevel Gearbox" aria-label="RK Heli-Bevel Gearbox, future module">
-          <img src="/assets/landing-rk.jpg" alt="RK heli-bevel gearbox"><span>Heli-Bevel<br>(RK)</span><i></i>
-        </button>
-        <button class="hotspot gear-hotspot gear-three" data-name="RF Parallel Helical Gearbox" aria-label="RF Parallel Helical Gearbox, future module">
-          <img src="/assets/landing-rf.jpg" alt="RF parallel helical gearbox"><span>Parallel Helical<br>(RF)</span><i></i>
-        </button>
-        <button class="hotspot gear-hotspot gear-four" data-name="RH Hoist Gearbox" aria-label="RH Hoist Gearbox, future module">
-          <img src="/assets/landing-rh.jpg" alt="RH parallel helical hoist gearbox"><span>Parallel Helical Hoist<br>(RH)</span><i></i>
-        </button>
-      </section>
+    <div class="landing-image-stage" aria-label="MGM Varvel products">
+      <img class="landing-exact-art" src="/assets/landing-exact.jpg" alt="MGM Varvel Motor and gearbox product selector">
+      <button class="image-arrow-hotspot motor-arrow" id="open-motor" type="button" aria-label="Open Motor configuration"></button>
+      <button class="image-arrow-hotspot gear-arrow gear-hotspot" data-name="RC Inline Helical Gearbox" type="button" aria-label="Open RC Inline Helical Gearbox placeholder"></button>
+      <button class="image-arrow-hotspot gear-arrow gear-hotspot" data-name="RK Heli-Bevel Gearbox" type="button" aria-label="Open RK Heli-Bevel Gearbox placeholder"></button>
+      <button class="image-arrow-hotspot gear-arrow gear-hotspot" data-name="RF Parallel Helical Gearbox" type="button" aria-label="Open RF Parallel Helical Gearbox placeholder"></button>
+      <button class="image-arrow-hotspot gear-arrow gear-hotspot" data-name="RH Hoist Gearbox" type="button" aria-label="Open RH Hoist Gearbox placeholder"></button>
     </div>
     <div class="landing-toast" id="landing-toast" role="status"></div>
   </main>
@@ -40,13 +21,13 @@
   <main id="selector" class="app-shell hidden">
     <header class="topbar">
       <button class="brand" id="back-home" aria-label="Back to product selector"><img src="/assets/company-logo-transparent.png" alt="MGM Varvel Power Transmission"></button>
-      <div class="topbar-right"><h1 class="topbar-title"><span class="motor-word">MOTOR</span><span class="datasheet-word">DATASHEET</span></h1></div>
+      <h1 class="topbar-title"><span class="motor-word">MOTOR</span><span class="datasheet-word">DATASHEET</span></h1>
+      <div class="topbar-right header-actions">
+        <button id="back-home-row" class="back-home-row" type="button" aria-label="Home"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m3 10 9-7 9 7M5.5 9v11h13V9M9.5 20v-7h5v7"/></svg><span>Home</span></button>
+        <button id="download-top" class="button button-primary intro-download"><span class="download-icon"></span> Download Datasheet</button>
+      </div>
     </header>
-    <section class="intro">
-      <button id="back-home-row" class="back-home-row" type="button"><span aria-hidden="true">←</span> Back to products</button>
-      <button id="download-top" class="button button-primary intro-download"><span class="download-icon"></span> Download Datasheet</button>
-    </section>
-    <section class="workspace">
+<section class="workspace">
       <div class="form-column">
         <article class="panel selection-panel">
           <div class="panel-heading"><div class="step">01</div><div><h2>Motor configuration</h2><p></p></div><span class="required-note">* Required</span></div>
@@ -78,3 +59,5 @@
   </main>
   <script src="/app.js"></script>
 </body></html>
+
+

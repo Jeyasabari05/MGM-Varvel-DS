@@ -2,10 +2,11 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import mimetypes
 import re
 import sys
-from decimal import Decimal, InvalidOperation
+import threading
 from collections import defaultdict
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -21,13 +22,12 @@ ROOT = Path(__file__).resolve().parent
 SOURCES = ROOT / "data" / "source_files"
 PDF = ROOT / "templates" / "DS-025-2028.pdf"
 STATIC = ROOT / "static"
-FAMILIES = {"BAX": "BAX", "BMX": "BMX", "SMX": "SMX"}
 SOURCE_CLASS = {
-    "1. BA - IE3 - AC.xlsx": ("BAX", "IE3", "AC"),
+    "1. BA - IE3 - AC.xlsx": (("BAX", "BAHX"), "IE3", "AC"),
     "2. BA - IE3 - DC.xlsx": ("BAX", "IE3", "DC"),
     "3. BM - IE3.xlsx": ("BMX", "IE3", None),
     "4. SM - IE3.xlsx": (None, "IE3", None),
-    "5. BA - IE2 - AC.xlsx": ("BAX", "IE2", "AC"),
+    "5. BA - IE2 - AC.xlsx": (("BAX", "BAHX"), "IE2", "AC"),
     "6. BA - IE2 - DC.xlsx": ("BAX", "IE2", "DC"),
     "7. BM - IE2.xlsx": ("BMX", "IE2", "DC"),
     "8. SM - IE2.xlsx": ("SMX", "IE2", None),
@@ -67,8 +67,18 @@ def read_sources():
                 power = clean(ws.cell(2, col).value)
                 frame = clean(ws.cell(4, col).value)
                 if not power or not frame or not motor_kind: continue
-                family = "BAX" if motor_kind.startswith("BAX") else ("BMX" if motor_kind == "BMX" else ("SMX" if motor_kind == "SMX" else None))
-                if not family or (family_hint and family != family_hint): continue
+                if motor_kind.startswith("BAHX"):
+                    family = "BAHX"
+                elif motor_kind.startswith("BAX"):
+                    family = "BAX"
+                elif motor_kind == "BMX":
+                    family = "BMX"
+                elif motor_kind == "SMX":
+                    family = "SMX"
+                else:
+                    family = None
+                allowed_families = family_hint if isinstance(family_hint, tuple) else (family_hint,)
+                if not family or (family_hint and family not in allowed_families): continue
                 values = {}
                 parent_label = None
                 for row in range(1, ws.max_row + 1):
@@ -92,6 +102,8 @@ def read_sources():
                 eff = values.get("Efficiency Class") or class_hint
                 if class_hint and eff != class_hint: continue
                 brake_type = values.get("Brake type") or brake_hint
+                if brake_type and brake_type.strip().upper() in ("AC", "DC"):
+                    brake_type = brake_type.strip().upper()
                 records.append({"family": family, "efficiency": eff, "power": power, "frame": frame,
                     "brakeType": brake_type, "source": name, "column": col, "values": values})
             wb.close()
@@ -100,9 +112,39 @@ def read_sources():
     return records, errors
 
 RECORDS, SOURCE_ERRORS = read_sources()
+SOURCE_SIGNATURE = None
+SOURCE_LOCK = threading.Lock()
+
+def source_signature():
+    signature = []
+    for name in SOURCE_CLASS:
+        path = SOURCES / name
+        try:
+            stat = path.stat()
+            digest = hashlib.sha256(path.read_bytes()).hexdigest()
+            signature.append((name, stat.st_mtime_ns, stat.st_size, digest))
+        except OSError:
+            signature.append((name, None, None, None))
+    return tuple(signature)
+
+def refresh_sources_if_changed():
+    """Reload the workbook catalog after a saved source file changes."""
+    global RECORDS, SOURCE_ERRORS, SOURCE_SIGNATURE
+    current_signature = source_signature()
+    if current_signature == SOURCE_SIGNATURE:
+        return
+    with SOURCE_LOCK:
+        current_signature = source_signature()
+        if current_signature == SOURCE_SIGNATURE:
+            return
+        records, errors = read_sources()
+        RECORDS, SOURCE_ERRORS = records, errors
+        SOURCE_SIGNATURE = source_signature()
 
 def available():
-    return {"families": sorted({r["family"] for r in RECORDS}), "classes": sorted({r["efficiency"] for r in RECORDS if r["efficiency"]}),
+    family_order = ("BAX", "BMX", "SMX", "BAHX")
+    present_families = {r["family"] for r in RECORDS}
+    return {"families": [family for family in family_order if family in present_families], "classes": sorted({r["efficiency"] for r in RECORDS if r["efficiency"]}),
             "records": len(RECORDS), "sourceErrors": SOURCE_ERRORS}
 
 def diagnostic_report():
@@ -201,7 +243,7 @@ PDF_ROWS = {
     "breakdown torque": (19, 0), "reference standard": (52, 0), "bearing": (30, 1), "bearing nde": (31, 1),
     "bearing life time": (32, 1), "lubrication type": (33, 1), "voltage variation": (38, 1),
     "frequency variation": (39, 1), "combined variation": (40, 1), "environmental condition": (26, 1),
-    "direction of rotation": (None, 1), "housing material": (34, 1), "flange material": (35, 1),
+    "direction of rotation": (10, 1), "housing material": (34, 1), "flange material": (35, 1),
     "motor weight": (36, 1), "lifting eyebot size": (37, 1), "terminal box position (view from nde)": (41, 1),
     "type of terminal box": (43, 1), "material of terminal box": (42, 1), "terminal size": (44, 1),
     "no. of terminals": (45, 1), "cable entry thread size": (46, 1), "no. of cable glands": (47, 1),
@@ -215,6 +257,7 @@ PDF_ROWS = {
 def pdf_value_for(label, rec):
     vals = rec["values"]
     row, side = PDF_ROWS.get(label, (None, None))
+    if label == "direction of rotation": return "Bi-directional"
     if label == "rated power": return rec["power"]
     if label == "frame size": return rec["frame"]
     if label == "type of mounting":
@@ -226,6 +269,10 @@ def pdf_value_for(label, rec):
         return v.replace("%", "").strip() if v else None
     if label == "sound pressure level - 50hz":
         return vals.get("Sound pressure level - 50Hz")
+    if label == "rated voltage":
+        voltage=vals.get("Rated Voltage")
+        pair=re.fullmatch(r"\s*(.*?)\s*/\s*(.*?)\s*", voltage or "")
+        return f"{pair.group(1)}\u0394 / {pair.group(2)}Y" if pair else voltage
     if label == "input supply voltage": return vals.get("Input supply voltage")
     if label == "brake coil voltage": return vals.get("Brake coil voltage")
     if label == "brake type": return rec.get("brakeType")
@@ -234,18 +281,9 @@ def pdf_value_for(label, rec):
         m=re.search(r"utilized to\s+(\d+)\s*\(([A-Z])\)", v, re.I)
         return m.group(2) if m else None
     if label in ("locked rotor current", "locked rotor torque", "breakdown torque"):
-        ratio_key={"locked rotor current":"Current - Locked rotor / Rated", "locked rotor torque":"Torque - Locked rotor / Rated", "breakdown torque":"Torque - Breakdown / Rated"}[label]
-        base_key="Rated Current" if label=="locked rotor current" else "Rated Torque"
-        ratio=vals.get(ratio_key); base=vals.get(base_key)
-        # Excel supplies IA/IN and torque ratios, while the PDF cells are in A/Nm.
-        # Convert only when both source operands are numeric; use the first current
-        # entry because the reference's corresponding field is a single value.
-        if not ratio or not base or ratio.lower()=="italy" or base.lower()=="italy": return None
-        base_num=re.search(r"[-+]?\d+(?:\.\d+)?",base)
-        ratio_num=re.search(r"[-+]?\d+(?:\.\d+)?",ratio)
-        if not base_num or not ratio_num: return None
-        try: return f"{Decimal(base_num.group())*Decimal(ratio_num.group()):.1f}"
-        except InvalidOperation: return None
+        source_key={"locked rotor current":"Current - Locked rotor / Rated", "locked rotor torque":"Torque - Locked rotor / Rated", "breakdown torque":"Torque - Breakdown / Rated"}[label]
+        source_value=vals.get(source_key)
+        return None if source_value and source_value.strip().lower() in {"italy", "n/a", "-"} else source_value
     if row is None: return None
     value = vals.get({"rated power":"Power Rating", "number of poles":"No. of Poles", "frame size":"Frame Size",
                       "type of mounting":"Mounting", "rated voltage":"Rated Voltage", "rated frequency":"Rated Frequency",
@@ -283,7 +321,7 @@ def generate_pdf(rec):
     if logo_info:
         xref=logo_info[0][0]
         rects=page.get_image_rects(xref)
-        if rects: logo=(fitz.Rect(rects[0]),doc.extract_image(xref)["image"])
+        if rects: logo=(xref,fitz.Rect(rects[0]))
     # Remove reference sample values while keeping the grid, labels, logo and page layout.
     spans=[]
     for block in page.get_text("dict")["blocks"]:
@@ -301,10 +339,21 @@ def generate_pdf(rec):
             page.add_redact_annot(fitz.Rect(x0-0.5,y0-0.6,x1+0.5,y1+0.7),fill=(1,1,1))
         if not rec.get("brakeType") and s["text"].endswith("(Brake motor)"):
             page.add_redact_annot(fitz.Rect(x0-0.5,y0-0.6,x1+0.5,y1+0.7),fill=(1,1,1))
+        if s["text"].strip() == "** Aluminium parts are unpainted":
+            page.add_redact_annot(fitz.Rect(x0-0.5,y0-0.6,x1+0.5,y1+0.7),fill=(1,1,1))
+        if 560 <= x0 <= 563 and 417 <= y0 <= 421:
+            page.add_redact_annot(fitz.Rect(x0-0.5,y0-0.6,x1+0.5,y1+0.7),fill=(1,1,1))
         if rec.get("brakeType")=="DC" and 275<=x0<=285 and 565<=y0<=572:
             # The reference's static suffix says AC; the DC workbook specifies a DC brake coil.
             page.add_redact_annot(fitz.Rect(x0-0.5,y0-0.6,x1+0.5,y1+0.7),fill=(1,1,1))
     page.apply_redactions(images=0,graphics=0)
+    if rec.get("family") == "SMX":
+        # SMX datasheets have no brake block; move the Special Designs heading
+        # directly below the motor specifications and retain one full-width area.
+        page.draw_rect(fitz.Rect(55.56,499.8,588.36,599.88),color=None,fill=(1,1,1),overlay=True)
+        page.insert_text((61.56,510.6),"Special Designs",fontname="hebo",fontsize=10.06,color=(0,0,0),overlay=True)
+        page.draw_line(fitz.Point(55.56,516.48),fitz.Point(588.36,516.48),color=(0,0,0),width=0.6,overlay=True)
+        page.draw_line(fitz.Point(587.94,499.8),fitz.Point(587.94,749.16),color=(0,0,0),width=0.84,overlay=True)
     values={}
     for label,(row,side) in PDF_ROWS.items():
         if row is None or label=="temperature rise class": continue
@@ -327,11 +376,45 @@ def generate_pdf(rec):
         if len(val)>29: val=val[:27]+"…"
         max_width=(319-x if side==0 else 580-x)-4
         font_size=min(8.4,max(6.0,max_width/max(fitz.get_text_length(val,fontname="helv",fontsize=8.4),1)*8.4))
-        page.insert_text((x,y+9.6),val,fontname="helv",fontsize=font_size,color=(0,0,0),overlay=True)
+        voltage_font=Path("C:/Windows/Fonts/arial.ttf")
+        if side==0 and y==135.4 and voltage_font.exists():
+            page.insert_text((x,y+9.6),val,fontname="ArialVoltage",fontfile=str(voltage_font),fontsize=font_size,color=(0,0,0),overlay=True)
+        else:
+            page.insert_text((x,y+9.6),val,fontname="helv",fontsize=font_size,color=(0,0,0),overlay=True)
     # Record descriptor and revision metadata.
-    desc=f"{rec['family']} {rec['frame']} {rec['values'].get('No. of Poles','')} {rec['values'].get('Rated Voltage','')} {rec['values'].get('Rated Frequency','')} {rec['values'].get('Mounting','')} P-{rec['power']}kW, {rec['efficiency']}, {rec['values'].get('Degree of protection','')}, {rec['values'].get('Duty Type','')}"
+    page.insert_text((296.4,211.7),"rpm",fontname="helv",fontsize=8.4,color=(0,0,0),overlay=True)
+    right_unit_edge = 586.1
+    cable_diameter_unit_x = 566.0
+    units = [("mm\u00b2",427.7,cable_diameter_unit_x), ("dB",494.4,cable_diameter_unit_x)]
+    if rec.get("family") != "SMX":
+        units.append(("m.sec",561.1,None))
+    for unit, baseline, aligned_x in units:
+        unit_x = aligned_x if aligned_x is not None else right_unit_edge - fitz.get_text_length(unit,fontname="helv",fontsize=8.4)
+        page.insert_text((unit_x,baseline),unit,fontname="helv",fontsize=8.4,color=(0,0,0),overlay=True)
+    tolerance_note = "** The tolerance for Sound pressure level is \u00b13dB."
+    note_x = 277.5
+    page.insert_text((note_x,758.4),tolerance_note,fontname="heit",fontsize=7.3,color=(0,0,0),overlay=True)
+    aluminium_x = note_x + fitz.get_text_length(tolerance_note,fontname="heit",fontsize=7.3) + 12
+    page.insert_text((aluminium_x,758.4),"** Aluminium parts are unpainted",fontname="heit",fontsize=7.3,color=(0,0,0),overlay=True)
+    insulation=pdf_value_for("insulation class",rec)
+    insulation_tag=f", CL{insulation}" if insulation else ""
+    voltage=re.sub(r"\s*/\s*", ".", rec["values"].get("Rated Voltage") or "")
+    mounting=re.sub(r"^IM\s*", "", rec["values"].get("Mounting") or "", flags=re.I)
+    protection=re.sub(r"\s+", "", rec["values"].get("Degree of protection") or "")
+    desc=f"{rec['family']} {rec['frame']} {rec['values'].get('No. of Poles','')} {voltage} {rec['values'].get('Rated Frequency','')} {mounting}, P-{rec['power']}kW, {rec['efficiency']}{insulation_tag}, {protection}, {rec['values'].get('Duty Type','')}"
     page.insert_text((224.3,43.4),desc[:90],fontname="hebo",fontsize=8.2,color=(0,0,0),overlay=True)
-    if logo: page.insert_image(logo[0],stream=logo[1],overlay=True)
+    if logo:
+        logo_path=ROOT/"assets"/"company-logo-transparent.png"
+        if logo_path.exists():
+            logo_bytes=logo_path.read_bytes()
+            logo_pix=fitz.Pixmap(logo_bytes)
+            slot=logo[1]
+            scale=min(slot.width/logo_pix.width,slot.height/logo_pix.height)
+            width,height=logo_pix.width*scale,logo_pix.height*scale
+            fitted=fitz.Rect(slot.x0+(slot.width-width)/2,slot.y0+(slot.height-height)/2,
+                             slot.x0+(slot.width+width)/2,slot.y0+(slot.height+height)/2)
+            page.delete_image(logo[0])
+            page.insert_image(fitted,stream=logo_bytes,overlay=True)
     if not rec.get("brakeType"):
         page.insert_text((224.3,29.6),"Data sheet - Three phase - Squirrel cage motors",fontname="hebo",fontsize=10.06,color=(0,0,0),overlay=True)
     elif rec.get("brakeType")=="DC":
@@ -346,6 +429,8 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers(); self.wfile.write(body if isinstance(body,bytes) else body.encode())
     def do_GET(self):
         path=urlparse(self.path).path
+        if path in ("/api/meta", "/api/diagnostics", "/api/options"):
+            refresh_sources_if_changed()
         if path=="/api/meta": return self.respond(200,json.dumps(available()))
         if path=="/api/diagnostics": return self.respond(200,json.dumps(diagnostic_report()))
         if path=="/api/options":
@@ -360,6 +445,7 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         if urlparse(self.path).path!="/api/datasheet": return self.respond(404,"Not found","text/plain")
         try:
+            refresh_sources_if_changed()
             data=json.loads(self.rfile.read(int(self.headers.get("Content-Length",0))))
             required=("family","power","noOfPoles","efficiency","insulationClass","protection","mounting","coolingMethod")
             missing=[key for key in required if not data.get(key)]

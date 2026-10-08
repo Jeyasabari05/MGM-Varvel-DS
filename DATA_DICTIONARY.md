@@ -16,11 +16,11 @@ All ten files use a single worksheet named `Sheet2`. A sheet is a cross-tab rath
 
 | Source file | Family data | Efficiency | Brake configuration | Distinct power values |
 | --- | --- | --- | --- | ---: |
-| `1. BA - IE3 - AC.xlsx` | BAX | IE3 | AC | 17 |
+| `1. BA - IE3 - AC.xlsx` | BAX (0.25–30 kW), BAHX (37–132 kW) | IE3 | AC | 15 BAX + 7 BAHX |
 | `2. BA - IE3 - DC.xlsx` | BAX | IE3 | DC | 17 |
 | `3. BM - IE3.xlsx` | BMX | IE3 | no brake rows | 19 |
 | `4. SM - IE3.xlsx` | BMX and SMX | IE3 | no brake rows | 26 combined columns |
-| `5. BA - IE2 - AC.xlsx` | BAX | IE2 | AC | 17 |
+| `5. BA - IE2 - AC.xlsx` | BAX (0.25–30 kW), BAHX (37–132 kW) | IE2 | AC | 15 BAX + 7 BAHX |
 | `6. BA - IE2 - DC.xlsx` | BAX | IE2 | DC | 17 |
 | `7. BM - IE2.xlsx` | BMX | IE2 | DC | 19 |
 | `8. SM - IE2.xlsx` | SMX | IE2 | no brake rows | 24 |
@@ -29,7 +29,8 @@ All ten files use a single worksheet named `Sheet2`. A sheet is a cross-tab rath
 
 On inspection, the combined unique class/range coverage is:
 
-- BAX IE2 and IE3: 0.25–45 kW, 17 source power points each.
+- BAX IE2 and IE3 AC: 0.25–30 kW, 15 source power points each; DC: 0.25–45 kW, 17 points each.
+- BAHX IE2 and IE3 AC: 37–132 kW, 7 source power points each, read from the BAHX columns in the corresponding BA AC workbooks.
 - BMX IE2 and IE3: 0.12–45 kW, 19 points each.
 - SMX IE2 and IE3: 0.12–132 kW, 24 points each. The extra reference files overlap the base SMX records through 55 kW.
 
@@ -39,7 +40,7 @@ The exact list is computed from the files at runtime; the ranges above summarize
 
 The PDF page is US Letter portrait. The generation layer keeps its logo, labels, grid, title, footer, and page geometry. Source rows are mapped to the corresponding reference cells, including rated power, poles, frame, mounting, voltage, frequency, connection, current, speed, torque, efficiency class, duty, insulation, temperature rise, IP, cooling, locked-rotor ratios, load efficiencies, power factors, bearing, materials, terminal/cable fields, finish, vibration, sound, and brake details.
 
-For the three locked-rotor / torque cells, the workbooks contain ratios (`IA / IN`, `MA / MN`, `Mk / MN`) while the reference PDF displays A or Nm. The app explicitly multiplies each source ratio by its matching rated current or rated torque, uses the first rated-current value for the PDF's single current entry, and rounds to one decimal place to fit the reference field. It leaves the field blank unless both source operands are numeric. This is the only engineering conversion used.
+The three locked-rotor / torque values (`Current - Locked rotor / Rated`, `Torque - Locked rotor / Rated`, and `Torque - Breakdown / Rated`) are copied directly from their matching Excel cells into the generated PDF without calculation or conversion.
 
 Brake coil voltage retains the workbook's AC or DC designation. For DC brake records, the static `(AC)` unit suffix in the reference template is replaced with `(DC)` to match the source coil-voltage field. Input supply voltage remains labeled AC, as it is in each workbook.
 
