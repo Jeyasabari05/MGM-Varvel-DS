@@ -31,8 +31,6 @@ SOURCE_CLASS = {
     "6. BA - IE2 - DC.xlsx": ("BAX", "IE2", "DC"),
     "7. BM - IE2.xlsx": ("BMX", "IE2", "DC"),
     "8. SM - IE2.xlsx": ("SMX", "IE2", None),
-    "SM - IE2 (upto 55kW).xlsx": ("SMX", "IE2", None),
-    "SM - IE3 (upto 55kW).xlsx": ("SMX", "IE3", None),
 }
 
 def clean(v):

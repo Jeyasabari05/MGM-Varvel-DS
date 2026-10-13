@@ -154,3 +154,14 @@
 .app-shell.rf-view .rf-panel-collapsed .rf-section-toggle svg{transform:rotate(180deg)}
 .app-shell.rf-view .selection-panel.rf-panel-collapsed .field-grid,.app-shell.rf-view .detail-panel.rf-panel-collapsed .spec-groups{display:none}
 .app-shell.rf-view .rf-panel-collapsed .panel-heading{margin-bottom:0}
+.gearbox-panel,.gearbox-spec-panel{display:none}
+.app-shell.rh-view .gearbox-panel,.app-shell.rh-view .gearbox-spec-panel{display:block}
+.app-shell.rh-view .gearbox-panel.rf-panel-collapsed .gearbox-fields{display:none}
+.gearbox-panel{width:100%;padding:19px 22px 22px}
+.gearbox-panel .field>span{font-size:14px}
+.gearbox-spec-panel{width:100%;padding:19px 22px 17px}
+.gearbox-spec-panel .panel-heading{margin-bottom:12px}
+.field input[readonly]{width:100%;height:38px;border:1px solid #dbe3ec;border-radius:6px;background:#f8fafc;padding:0 11px;color:#183452;font:500 12px Segoe UI,sans-serif}
+.gearbox-spec-grid{grid-template-columns:repeat(3,minmax(120px,1fr));gap:0 16px}
+@media(max-width:760px){.gearbox-panel,.gearbox-spec-panel{padding:16px}.gearbox-panel .field>span{font-size:13px}}
+@media(max-width:440px){.gearbox-panel .field>span{font-size:12px}}

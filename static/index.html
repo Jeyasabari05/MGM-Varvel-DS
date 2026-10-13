@@ -8,12 +8,12 @@
 <body>
   <main id="landing" class="landing" aria-label="Product selector">
     <div class="landing-image-stage" aria-label="MGM Varvel products">
-      <img class="landing-exact-art" src="/assets/landing-from-pdf.png" alt="MGM Varvel Motor and gearbox product selector">
+      <img class="landing-exact-art" src="/assets/MGM_Varvel_Landing_Page.png" alt="MGM Varvel Motor and gearbox product selector">
       <button class="image-arrow-hotspot motor-arrow" id="open-motor" type="button" aria-label="Open Motor configuration"></button>
       <button class="image-arrow-hotspot gear-arrow gear-hotspot" data-name="RK Heli-Bevel Gearbox" type="button" aria-label="Open RK Heli-Bevel Gearbox placeholder"></button>
-      <button class="image-arrow-hotspot gear-arrow gear-hotspot" data-name="RC Inline Helical Gearbox" type="button" aria-label="Open RC Inline Helical Gearbox placeholder"></button>
+      <button class="image-arrow-hotspot gear-arrow" id="open-rh" type="button" aria-label="Open RH Hoist Gearbox configuration"></button>
       <button class="image-arrow-hotspot gear-arrow rf-hotspot" id="open-rf" data-name="RF Parallel Helical Gearbox" type="button" aria-label="Open RF configuration"></button>
-      <button class="image-arrow-hotspot gear-arrow gear-hotspot" data-name="RH Hoist Gearbox" type="button" aria-label="Open RH Hoist Gearbox placeholder"></button>
+      <button class="image-arrow-hotspot gear-arrow gear-hotspot" data-name="RC Inline Helical Gearbox" type="button" aria-label="Open RC Inline Helical Gearbox placeholder"></button>
     </div>
     <div class="landing-toast" id="landing-toast" role="status"></div>
   </main>
@@ -24,7 +24,7 @@
       <h1 class="topbar-title"><span class="motor-word">MOTOR</span><span class="datasheet-word">DATASHEET</span></h1>
       <div class="topbar-right header-actions">
         <button id="back-home-row" class="back-home-row" type="button" aria-label="Home"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m3 10 9-7 9 7M5.5 9v11h13V9M9.5 20v-7h5v7"/></svg><span>Home</span></button>
-        <button id="download-top" class="button button-primary intro-download"><span class="download-icon"></span> Download Datasheet</button>
+        <button id="download-top" class="button button-primary intro-download" disabled><span class="download-icon"></span> Download Datasheet</button>
       </div>
     </header>
 <section class="workspace">
@@ -50,6 +50,20 @@
             <section class="spec-group"><h3><span class="group-icon">◈</span>Construction &amp; protection</h3><div class="spec-grid" id="construction"></div></section>
             <section class="spec-group"><h3><span class="group-icon">⌁</span>Brake details</h3><div class="spec-grid" id="brake-specs"></div></section>
           </div>
+        </article>
+        <article class="panel gearbox-panel">
+          <div class="panel-heading"><button class="rf-section-toggle step-toggle" type="button" data-panel="gearbox-panel" aria-label="Collapse Gearbox configuration" aria-expanded="true" title="Collapse Gearbox configuration"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></button><div class="step">03</div><div><h2>Gearbox Configuration</h2><p></p></div></div>
+          <div class="field-grid gearbox-fields">
+            <label class="field"><span>Power P1 (kW)</span><select id="gear-power"></select></label>
+            <label class="field"><span>Speed n1 (rpm)</span><select id="gear-speed"><option>2800</option><option>1400</option><option>900</option><option>700</option></select></label>
+            <label class="field"><span>Input torque M1 (Nm)</span><input id="gear-input-torque" readonly></label>
+            <label class="field"><span>Size</span><select id="gear-size"><option>RH 073</option><option>RH 083</option><option>RH 093</option><option>RH 103</option><option>RH 123</option></select></label>
+            <label class="field"><span>Ratio (i)</span><select id="gear-ratio"><option value="">Select ratio</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>10</option><option>12.5</option><option>15</option><option>20</option><option>25</option><option>30</option><option>40</option><option>50</option><option>60</option><option>80</option><option>100</option></select></label>
+          </div>
+        </article>
+        <article class="panel gearbox-spec-panel">
+          <div class="panel-heading"><div class="step step-muted">04</div><div><h2>Gearbox specifications</h2><p></p></div></div>
+          <div class="spec-groups"><section class="spec-group"><div class="spec-grid gearbox-spec-grid"><div class="spec-item"><span>Output speed (rpm)</span><b id="gear-output-speed" class="empty">—</b></div><div class="spec-item"><span>Output torque (Nm)</span><b id="gear-output-torque" class="empty">—</b></div><div class="spec-item"><span>Service factor</span><b class="empty">—</b></div></div></section></div>
         </article>
         <div class="notice" id="notice" role="status"><span class="notice-icon">i</span><span id="notice-text">Choose a motor type to view the available source data.</span></div>
       </div>
