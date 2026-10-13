@@ -155,7 +155,12 @@
 .app-shell.rf-view .selection-panel.rf-panel-collapsed .field-grid,.app-shell.rf-view .detail-panel.rf-panel-collapsed .spec-groups{display:none}
 .app-shell.rf-view .rf-panel-collapsed .panel-heading{margin-bottom:0}
 .gearbox-panel,.gearbox-spec-panel{display:none}
-.app-shell.rh-view .gearbox-panel,.app-shell.rh-view .gearbox-spec-panel{display:block}
+.app-shell.rf-view .gearbox-panel,.app-shell.rf-view .gearbox-spec-panel{display:block}
+.app-shell.rf-view .gearbox-panel{order:1}
+.app-shell.rf-view .gearbox-spec-panel{order:2}
+.app-shell.rf-view .selection-panel{order:3}
+.app-shell.rf-view .detail-panel{order:4}
+.app-shell.rf-view .notice{order:5}
 .app-shell.rh-view .gearbox-panel.rf-panel-collapsed .gearbox-fields{display:none}
 .gearbox-panel{width:100%;padding:19px 22px 22px}
 .gearbox-panel .field>span{font-size:14px}
